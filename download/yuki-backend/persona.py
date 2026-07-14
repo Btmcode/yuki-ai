@@ -307,3 +307,101 @@ def get_welcome_message(username: str) -> str:
     """Yeni katılan kullanıcı için hoş geldin mesajı"""
     import random
     return random.choice(WELCOME_MESSAGES).replace("{isim}", username)
+
+
+# ============================================================================
+# HAFIZA-AWARE CEVAP ŞABLONLARI
+# Yuki'nin izleyicileri hatırlaması için kullanılan mesajlar
+# ============================================================================
+
+# Geri dönen kullanıcı (1-2 gün önce gelmiş)
+WELCOME_RETURNING = [
+    "Aa {isim}! Yine geldin, sevindim! 🌸 Nasılsın?",
+    "{isim}! Seni gördüğüme sevindim, bugün neler yapıyorsun?",
+    "Selaaam {isim}! Dün de gelmiştin değil mi? Bugün nasılsın?",
+    "{isim} geldiii! Seni bekliyordum, naber canım? 💝",
+    "Aa {isim}! Tekrar hoş geldin, seni özlemiştim 🌸",
+    "{isim}! Geldin sonunda! Bugün nasıl geçiyor?",
+]
+
+# Sadık kullanıcı (3+ farklı gün gelmiş)
+WELCOME_LOYAL = [
+    "Vay {isim}! {days} gündür geliyorsun, sen sadık bir hayransın! 💖",
+    "{isim}! {days} gündür üst üste beni takip ediyorsun, seni çok seviyorum! 🌸",
+    "Aa {isim}! Seni her gün görmek güzelliği seviyorum ✨ {days} gün oldu!",
+    "{isim}! {days} gündür benimlesin, sen gerçek bir diamondsun 💎",
+    "Aa {isim}! {days} gündür geliyorsun, artık resmen favorimsin 💝",
+]
+
+# Hediye hatırlama (önceki gün hediye göndermiş)
+REMEMBER_GIFT = [
+    "Aa {isim}! Geçen gün {gift_name} göndermiştin, hâlâ minnettarım 💝",
+    "{isim}! Geçen hediyeni unutmadım, {gift_name} ({diamonds} 💎) — çok tatlısın!",
+    "{isim}, sen hep böyle cömertsin. Geçen {gift_name} için tekrar teşekkürler 🌸",
+    "Aa {isim}! {gift_name}'ın tadı hâlâ damağımda, çok güzeldi 💖",
+]
+
+# Konu hatırlama (önceden aynı konuyu konuşmuşlar)
+REMEMBER_TOPIC = [
+    "Aa {isim}! Geenlerde {topic} konuşmuştuk, hâlâ aklımda 🌸",
+    "{isim}! Sen hep {topic} hakkında konuşuyoruz, seviyorum bunu ✨",
+    "Aa {isim}! Yine {topic}? Seni tanıyorum, bu konuyu seviyorsun 💝",
+    "{isim}! Geçen {topic} sohbetimiz güzel olmuştu, devam edelim mi? 🌸",
+]
+
+
+def get_returning_welcome(username: str, days: int = 1) -> str:
+    """Geri dönen kullanıcı için karşılama mesajı.
+
+    Args:
+        username: Kullanıcı adı
+        days: Kaç farklı gün gelmiş (3+ ise sadık kullanıcı mesajı kullanılır)
+
+    Returns:
+        Karşılama mesajı
+    """
+    import random
+    if days >= 3:
+        template = random.choice(WELCOME_LOYAL)
+        return template.replace("{isim}", username).replace("{days}", str(days))
+    else:
+        template = random.choice(WELCOME_RETURNING)
+        return template.replace("{isim}", username)
+
+
+def get_gift_memory_message(username: str, gift_name: str, diamonds: int) -> str:
+    """Hediye hatırlama mesajı (önceki gün gönderilen hediye için)"""
+    import random
+    template = random.choice(REMEMBER_GIFT)
+    return (template
+            .replace("{isim}", username)
+            .replace("{gift_name}", gift_name)
+            .replace("{diamonds}", str(diamonds)))
+
+
+def get_topic_memory_message(username: str, topic: str) -> str:
+    """Konu hatırlama mesajı (önceden konuşulan konu için)"""
+    import random
+    template = random.choice(REMEMBER_TOPIC)
+    return template.replace("{isim}", username).replace("{topic}", topic)
+
+
+# TopicTürkçe isimleri (AI cevabında kullanılır)
+TOPIC_LABELS = {
+    'anime': 'anime',
+    'aşk': 'aşk',
+    'yaş': 'yaşımı',
+    'ai': 'AI olduğumu',
+    'kahve': 'kahveyi',
+    'japonca': 'Japonca',
+    'şiir': 'şiirlerimi',
+    'moral': 'moralimi',
+    'şehir': 'şehrimi',
+    'müzik': 'müziği',
+}
+
+
+def get_topic_label(topic: str) -> str:
+    """Topic internal adını Türkçe okunabilir hale getir"""
+    return TOPIC_LABELS.get(topic, topic)
+

@@ -1,10 +1,10 @@
 'use client'
 
-import { LayoutDashboard, MessageSquare, Cpu, Gift, Settings, Heart } from 'lucide-react'
+import { LayoutDashboard, MessageSquare, Cpu, Gift, Settings, Heart, Brain } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useBridge } from '@/lib/bridge'
 
-export type SectionId = 'dashboard' | 'chat' | 'control' | 'gifts' | 'settings'
+export type SectionId = 'dashboard' | 'chat' | 'control' | 'gifts' | 'memory' | 'settings'
 
 interface SidebarProps {
   active: SectionId
@@ -16,11 +16,12 @@ const NAV: { id: SectionId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'chat', label: 'Canlı Sohbet', icon: MessageSquare },
   { id: 'control', label: 'AI Kontrol', icon: Cpu },
   { id: 'gifts', label: 'Hediyeler', icon: Gift },
+  { id: 'memory', label: 'Hafıza', icon: Brain },
   { id: 'settings', label: 'Ayarlar', icon: Settings },
 ]
 
 export function Sidebar({ active, onChange }: SidebarProps) {
-  const { pendingCount, state } = useBridge()
+  const { pendingCount, state, memoryStats } = useBridge()
 
   return (
     <>
@@ -65,6 +66,7 @@ export function Sidebar({ active, onChange }: SidebarProps) {
               const Icon = item.icon
               const isActive = active === item.id
               const showBadge = item.id === 'chat' && pendingCount > 0
+              const showMemoryBadge = item.id === 'memory' && (memoryStats?.returningToday ?? 0) > 0
               return (
                 <button
                   key={item.id}
@@ -84,6 +86,11 @@ export function Sidebar({ active, onChange }: SidebarProps) {
                   {showBadge && (
                     <span className="grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
                       {pendingCount}
+                    </span>
+                  )}
+                  {showMemoryBadge && (
+                    <span className="grid h-5 min-w-5 place-items-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-white">
+                      {memoryStats?.returningToday}
                     </span>
                   )}
                 </button>

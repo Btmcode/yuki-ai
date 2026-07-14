@@ -11,6 +11,8 @@
 
 import { createServer } from 'http'
 import { Server } from 'socket.io'
+import * as fs from 'fs'
+import * as path from 'path'
 
 const PORT = 3003
 
@@ -55,6 +57,23 @@ interface StreamState {
   totalDiamonds: number
 }
 
+// Kullanıcı hafızası — Yuki'nin izleyicileri hatırlaması için
+interface UserMemory {
+  username: string
+  firstSeen: string
+  lastSeen: string
+  lastDaySeen: string
+  daysSeen: string[]
+  messageCount: number
+  giftCount: number
+  totalDiamonds: number
+  favoriteTopics: string[]
+  lastTopic: string | null
+  lastGift: { name: string; diamonds: number; date: string } | null
+  notes: { text: string; date: string }[]
+  mood: string
+}
+
 // ============================================================================
 // State
 // ============================================================================
@@ -74,6 +93,161 @@ const recentMessages: ChatMessage[] = []
 const recentGifts: GiftEvent[] = []
 const bannedUsers = new Set<string>(['spammer_99', 'bot_hater'])
 const filteredWords = ['küfür1', 'reklam', 'spam', 'https://']
+
+// ============================================================================
+// Kullanıcı Hafızası (kalıcı — memory.json'a kaydolur)
+// ============================================================================
+const userMemory = new Map<string, UserMemory>()
+const MEMORY_FILE = path.join(__dirname, 'memory.json')
+
+function loadMemory() {
+  try {
+    if (fs.existsSync(MEMORY_FILE)) {
+      const data = JSON.parse(fs.readFileSync(MEMORY_FILE, 'utf-8'))
+      for (const [k, v] of Object.entries(data)) {
+        userMemory.set(k, v as UserMemory)
+      }
+      console.log(`[memory] ${userMemory.size} kullanıcı yüklendi`)
+    }
+  } catch (e) {
+    console.error('[memory] yükleme hatası:', e)
+  }
+}
+
+function saveMemory() {
+  try {
+    const obj: Record<string, UserMemory> = {}
+    for (const [k, v] of userMemory.entries()) obj[k] = v
+    fs.writeFileSync(MEMORY_FILE, JSON.stringify(obj, null, 2))
+  } catch (e) {
+    console.error('[memory] kaydetme hatası:', e)
+  }
+}
+
+loadMemory()
+
+function detectTopic(message: string): string | null {
+  const msg = message.toLowerCase()
+  const topicKeywords: Record<string, string[]> = {
+    'anime': ['anime', 'manga', 'otaku', 'naruto', 'violet'],
+    'aşk': ['aşık', 'evlen', 'seviyorum', 'flört', 'sevgil'],
+    'yaş': ['kaç yaş', 'yaşın'],
+    'ai': ['ai', 'bot', 'yapay', 'gerçek'],
+    'kahve': ['kahve', 'latte', 'coffee'],
+    'japonca': ['japonca', 'japon', 'nihongo', 'tokyo'],
+    'şiir': ['şiir', 'siir'],
+    'moral': ['sıkıldı', 'üzgün', 'moral'],
+    'şehir': ['şehir', 'nerde', 'nereli'],
+    'müzik': ['müzik', 'şarkı', 'melodi'],
+  }
+  for (const [topic, keywords] of Object.entries(topicKeywords)) {
+    if (keywords.some(kw => msg.includes(kw))) return topic
+  }
+  return null
+}
+
+function recordInteraction(
+  username: string,
+  message: string = '',
+  mood: string = 'happy',
+  gift?: { name: string; diamonds: number },
+): UserMemory {
+  const key = username.toLowerCase()
+  const now = new Date()
+  const today = now.toISOString().slice(0, 10)
+
+  let user = userMemory.get(key)
+  if (!user) {
+    user = {
+      username,
+      firstSeen: now.toISOString(),
+      lastSeen: now.toISOString(),
+      lastDaySeen: today,
+      daysSeen: [today],
+      messageCount: 0,
+      giftCount: 0,
+      totalDiamonds: 0,
+      favoriteTopics: [],
+      lastTopic: null,
+      lastGift: null,
+      notes: [],
+      mood,
+    }
+    userMemory.set(key, user)
+  }
+
+  user.lastSeen = now.toISOString()
+  if (user.lastDaySeen !== today) {
+    user.lastDaySeen = today
+    if (!user.daysSeen.includes(today)) {
+      user.daysSeen.push(today)
+      if (user.daysSeen.length > 30) user.daysSeen = user.daysSeen.slice(-30)
+    }
+  }
+
+  if (message) {
+    user.messageCount++
+    const topic = detectTopic(message)
+    if (topic) {
+      if (!user.favoriteTopics.includes(topic)) user.favoriteTopics.push(topic)
+      user.lastTopic = topic
+    }
+  }
+
+  if (gift) {
+    user.giftCount++
+    user.totalDiamonds += gift.diamonds
+    user.lastGift = { name: gift.name, diamonds: gift.diamonds, date: now.toISOString() }
+  }
+
+  user.mood = mood
+  saveMemory()
+  return user
+}
+
+function isNewUser(username: string): boolean {
+  return !userMemory.has(username.toLowerCase())
+}
+
+function isReturningToday(username: string): boolean {
+  const user = userMemory.get(username.toLowerCase())
+  if (!user) return false
+  const today = new Date().toISOString().slice(0, 10)
+  return user.lastDaySeen !== today && user.daysSeen.length > 0
+}
+
+function isLoyalUser(username: string, minDays: number = 3): boolean {
+  const user = userMemory.get(username.toLowerCase())
+  if (!user) return false
+  return user.daysSeen.length >= minDays
+}
+
+function daysCount(username: string): number {
+  const user = userMemory.get(username.toLowerCase())
+  return user ? user.daysSeen.length : 0
+}
+
+function getMemoryStats() {
+  const today = new Date().toISOString().slice(0, 10)
+  const users = Array.from(userMemory.values())
+  return {
+    totalUsers: users.length,
+    returningToday: users.filter(u => u.daysSeen.length > 1 && u.lastDaySeen === today).length,
+    loyalUsers: users.filter(u => u.daysSeen.length >= 3).length,
+    recent24h: users.filter(u => {
+      const last = new Date(u.lastSeen)
+      const diff = Date.now() - last.getTime()
+      return diff < 24 * 60 * 60 * 1000
+    }).length,
+    totalMessages: users.reduce((s, u) => s + u.messageCount, 0),
+    totalGifts: users.reduce((s, u) => s + u.giftCount, 0),
+    totalDiamonds: users.reduce((s, u) => s + u.totalDiamonds, 0),
+  }
+}
+
+function broadcastMemoryStats() {
+  io.emit('memory:stats', getMemoryStats())
+}
 
 // Türk TikTok izleyici simülasyonu — gerçekçi kullanıcı adları
 const SIM_USERS = [
@@ -160,7 +334,83 @@ function pickRandomWeighted<T>(arr: T[], weightFn: (item: T) => number): T {
 function generateAIResponse(userMsg: string, username: string): { text: string, mood: CharacterMood } {
   const lower = userMsg.toLowerCase()
 
-  // Basit kural bazlı cevaplar (gerçek LLM olmadan demo amaçlı)
+  // === HAFIZA-AWARE CEVAPLAR ===
+  // Önce kullanıcının hafıza durumunu kontrol et
+  const new_user = isNewUser(username)
+  const returning = isReturningToday(username)
+  const loyal = isLoyalUser(username)
+  const days = daysCount(username)
+
+  // 1. Geri dönen kullanıcı (sadık veya normal)
+  if (returning && loyal) {
+    const welcomes = [
+      `Vay ${username}! ${days} gündür geliyorsun, sen sadık bir hayransın! 💖`,
+      `${username}! ${days} gündür beni takip ediyorsun, seni çok seviyorum! 🌸`,
+      `Aa ${username}! Seni her gün görmek güzelliği seviyorum ✨ ${days} gün oldu!`,
+      `${username}! ${days} gündür benimlesin, sen gerçek bir diamondsun 💎`,
+    ]
+    return { text: welcomes[Math.floor(Math.random() * welcomes.length)], mood: 'excited' }
+  }
+  if (returning) {
+    const welcomes = [
+      `Aa ${username}! Yine geldin, sevindim! 🌸 Nasılsın?`,
+      `${username}! Seni gördüğüme sevindim, bugün neler yapıyorsun?`,
+      `Selaaam ${username}! Dün de gelmiştin değil mi? Bugün nasılsın?`,
+      `${username} geldiii! Seni bekliyordum, naber canım? 💝`,
+      `Aa ${username}! Tekrar hoş geldin, seni özlemiştim 🌸`,
+    ]
+    return { text: welcomes[Math.floor(Math.random() * welcomes.length)], mood: 'happy' }
+  }
+
+  // 2. Aynı gün tekrar mesaj atıyor — hediye veya konu hatırla
+  if (!new_user) {
+    const user = userMemory.get(username.toLowerCase())
+    if (user) {
+      // Önceki günden hediye göndermiş mi?
+      const lastGift = user.lastGift
+      if (lastGift) {
+        const giftDate = (lastGift.date || '').slice(0, 10)
+        const today = new Date().toISOString().slice(0, 10)
+        if (giftDate && giftDate !== today) {
+          const msgs = [
+            `Aa ${username}! Geçen gün ${lastGift.name} göndermiştin, hâlâ minnettarım 💝`,
+            `${username}! Geçen hediyeni unutmadım, ${lastGift.name} (${lastGift.diamonds} 💎) — çok tatlısın!`,
+            `${username}, sen hep böyle cömertsin. Geçen ${lastGift.name} için tekrar teşekkürler 🌸`,
+          ]
+          return { text: msgs[Math.floor(Math.random() * msgs.length)], mood: 'flirty' }
+        }
+      }
+
+      // Aynı konuyu tekrar konuşuyor
+      const lastTopic = user.lastTopic
+      if (lastTopic) {
+        const topicKeywords: Record<string, string[]> = {
+          'anime': ['anime', 'manga', 'otaku'],
+          'aşk': ['aşık', 'evlen', 'seviyorum'],
+          'kahve': ['kahve', 'latte'],
+          'japonca': ['japonca', 'japon'],
+        }
+        const keywords = topicKeywords[lastTopic] || []
+        if (keywords.some(kw => lower.includes(kw))) {
+          const topicLabels: Record<string, string> = {
+            'anime': 'anime',
+            'aşk': 'aşk',
+            'kahve': 'kahveyi',
+            'japonca': 'Japonca',
+          }
+          const topicLabel = topicLabels[lastTopic] || lastTopic
+          const msgs = [
+            `Aa ${username}! Geenlerde ${topicLabel} konuşmuştuk, hâlâ aklımda 🌸`,
+            `${username}! Sen hep ${topicLabel} hakkında konuşuyoruz, seviyorum bunu ✨`,
+            `Aa ${username}! Yine ${topicLabel}? Seni tanıyorum, bu konuyu seviyorsun 💝`,
+          ]
+          return { text: msgs[Math.floor(Math.random() * msgs.length)], mood: 'happy' }
+        }
+      }
+    }
+  }
+
+  // 3. Normal kural bazlı cevaplar (yeni kullanıcı veya aynı gün ilk mesaj)
   if (lower.includes('merhaba') || lower.includes('selam') || lower.includes('naber')) {
     return { text: `Selaaam ${username}! Hoş geldin canım, nasılsın? Seni gördüğüme sevindim ✨`, mood: 'happy' }
   }
@@ -229,8 +479,18 @@ function broadcastGift(gift: GiftEvent) {
   if (recentGifts.length > 100) recentGifts.shift()
   state.totalGifts += 1
   state.totalDiamonds += gift.diamondCount * gift.giftCount
+
+  // Hafızaya hediye kaydet
+  recordInteraction(
+    gift.username,
+    '',
+    state.mood,
+    { name: gift.giftName, diamonds: gift.diamondCount * gift.giftCount },
+  )
+
   io.emit('gift:event', gift)
   broadcastState()
+  broadcastMemoryStats()
 }
 
 function broadcastSystem(text: string) {
@@ -270,6 +530,9 @@ function processIncomingChat(username: string, content: string) {
     return
   }
 
+  // Hafızaya kaydet (AI öncesi) — kullanıcı geçmişini tut
+  recordInteraction(username, content, state.mood)
+
   // Kullanıcı mesajını kaydet
   const userMsg: ChatMessage = {
     id: genId(),
@@ -282,7 +545,7 @@ function processIncomingChat(username: string, content: string) {
   }
   broadcastMessage(userMsg)
 
-  // AI cevap üret
+  // AI cevap üret (hafıza-aware)
   const ai = generateAIResponse(content, username)
   const aiMsg: ChatMessage = {
     id: genId(),
@@ -298,6 +561,9 @@ function processIncomingChat(username: string, content: string) {
   state.mood = ai.mood
   broadcastMessage(aiMsg)
   broadcastState()
+
+  // Hafıza istatistikleri de güncellensin
+  broadcastMemoryStats()
 }
 
 // ============================================================================
@@ -358,6 +624,8 @@ io.on('connection', (socket) => {
   socket.emit('state', state)
   socket.emit('chat:history', recentMessages.slice(-50))
   socket.emit('gift:history', recentGifts.slice(-30))
+  // Hafıza istatistiklerini de gönder
+  socket.emit('memory:stats', getMemoryStats())
 
   // === Yayın kontrolü ===
   socket.on('stream:start', (data: { tiktokUser: string }) => {
@@ -497,6 +765,69 @@ io.on('connection', (socket) => {
       filteredWords.splice(idx, 1)
       io.emit('filter:list', filteredWords)
     }
+  })
+
+  // === HAFIZA YÖNETİMİ ===
+  socket.on('memory:stats:get', () => {
+    socket.emit('memory:stats', getMemoryStats())
+  })
+
+  socket.on('memory:list', (data: { limit?: number, sortBy?: string, search?: string }) => {
+    const limit = data?.limit || 50
+    const sortBy = data?.sortBy || 'messageCount'
+    let users = Array.from(userMemory.values())
+
+    // Arama filtresi
+    if (data?.search) {
+      const q = data.search.toLowerCase()
+      users = users.filter(u => u.username.toLowerCase().includes(q))
+    }
+
+    // Sıralama
+    users.sort((a: any, b: any) => (b[sortBy] || 0) - (a[sortBy] || 0))
+    users = users.slice(0, limit)
+
+    socket.emit('memory:list', users)
+  })
+
+  socket.on('memory:get-user', (data: { username: string }) => {
+    const user = userMemory.get(data.username.toLowerCase())
+    socket.emit('memory:user-detail', user)
+  })
+
+  socket.on('memory:add-note', (data: { username: string, note: string }) => {
+    const key = data.username.toLowerCase()
+    let user = userMemory.get(key)
+    if (!user) {
+      // Yeni kullanıcı oluştur
+      user = recordInteraction(data.username)
+    }
+    user.notes.push({
+      text: data.note,
+      date: new Date().toISOString(),
+    })
+    saveMemory()
+    broadcastSystem(`Not eklendi: @${data.username} — "${data.note}"`)
+    io.emit('memory:updated')
+    broadcastMemoryStats()
+  })
+
+  socket.on('memory:forget', (data: { username: string }) => {
+    const key = data.username.toLowerCase()
+    if (userMemory.delete(key)) {
+      saveMemory()
+      broadcastSystem(`Hafızadan silindi: @${data.username}`)
+      io.emit('memory:updated')
+      broadcastMemoryStats()
+    }
+  })
+
+  socket.on('memory:clear-all', () => {
+    userMemory.clear()
+    saveMemory()
+    broadcastSystem('🚨 TÜM HAFIZA SİLİNDİ')
+    io.emit('memory:updated')
+    broadcastMemoryStats()
   })
 
   socket.on('disconnect', () => {

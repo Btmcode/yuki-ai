@@ -31,11 +31,16 @@ from tts_engine import TTSEngine
 from obs_controller import OBSController
 from tiktok_listener import TikTokListener, TIKTOK_AVAILABLE
 from bridge_client import BridgeClient
+from memory_store import UserMemoryStore
 
 
 class YukiOrchestrator:
     def __init__(self):
-        self.brain = AIBrain()
+        # Hafıza sistemi — kullanıcıları hatırlar
+        self.memory = UserMemoryStore(memory_file="memory.json")
+
+        # AI brain — hafıza ile bağlantılı
+        self.brain = AIBrain(memory_store=self.memory)
         self.tts = TTSEngine()
         self.obs = OBSController()
         self.tiktok = None
@@ -48,34 +53,53 @@ class YukiOrchestrator:
         """TikTok yorumu geldi"""
         logger.info(f"💬 @{username}: {content}")
 
+        # Hafızaya kaydet (AI öncesi)
+        if self.memory:
+            self.memory.record_interaction(username, content, self.brain and "happy" or "happy")
+
         # Bridge'e ilet (dashboard görsün)
         if self.bridge and self.bridge.connected:
             self.bridge.emit_comment(username, content)
 
-        # AI cevap üret
+        # AI cevap üret (hafıza-aware)
         ai_result = self.brain.generate_response(username, content)
-        logger.info(f"🤖 Yuki: {ai_result['text']} (mood: {ai_result['mood']})")
+        memory_tag = ""
+        if ai_result.get("memory_used"):
+            if ai_result.get("is_loyal"):
+                memory_tag = " [SADIK HAYRAN]"
+            elif ai_result.get("is_returning"):
+                memory_tag = " [GERİ DÖNEN]"
+            else:
+                memory_tag = " [HAFIZA KULLANILDI]"
+        elif ai_result.get("is_new_user"):
+            memory_tag = " [YENİ]"
+
+        logger.info(f"🤖 Yuki: {ai_result['text']} (mood: {ai_result['mood']}){memory_tag}")
 
         # Mode'a göre davran
         if self.autonomy_mode == "full" and not self.emergency_stopped:
-            # Tam otonom — hemen TTS üret ve çal
             self._speak(ai_result["text"], ai_result["mood"])
         elif self.autonomy_mode == "semi":
-            # Yarı otonom — bridge'e pending olarak gönder, onay bekle
-            # Bridge zaten onay mekanizmasını yönetiyor
-            # Onay geldiğinde _handle_ai_approved çağrılacak
-            pass
-        # Manual modda sadece göster, çalma
+            pass  # Bridge onay mekanizması yönetir
+        # Manual modda sadece göster
 
     async def handle_gift(self, username: str, gift_name: str, gift_count: int, diamond_count: int):
         """TikTok hediyesi geldi"""
         logger.info(f"🎁 @{username} → {gift_name} x{gift_count} ({diamond_count} 💎)")
 
+        # Hafızaya hediye kaydet
+        if self.memory:
+            self.memory.record_interaction(
+                username,
+                gift_name=gift_name,
+                gift_diamonds=diamond_count * gift_count,
+            )
+
         # Bridge'e ilet
         if self.bridge and self.bridge.connected:
             self.bridge.emit_gift(username, gift_name, gift_count, diamond_count)
 
-        # Hediye için teşekkür mesajı üret
+        # Hediye için teşekkür mesajı üret (hafıza-aware)
         if self.autonomy_mode in ("semi", "full") and not self.emergency_stopped:
             thanks_msg = self.brain.generate_response(
                 username,

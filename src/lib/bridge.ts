@@ -44,6 +44,33 @@ export interface GiftEvent {
   timestamp: string
 }
 
+// Hafıza sistemi tipleri
+export interface UserMemory {
+  username: string
+  firstSeen: string
+  lastSeen: string
+  lastDaySeen: string
+  daysSeen: string[]
+  messageCount: number
+  giftCount: number
+  totalDiamonds: number
+  favoriteTopics: string[]
+  lastTopic: string | null
+  lastGift: { name: string; diamonds: number; date: string } | null
+  notes: { text: string; date: string }[]
+  mood: string
+}
+
+export interface MemoryStats {
+  totalUsers: number
+  returningToday: number
+  loyalUsers: number
+  recent24h: number
+  totalMessages: number
+  totalGifts: number
+  totalDiamonds: number
+}
+
 // ============================================================================
 // Zustand store — tüm dashboard state'i burada
 // ============================================================================
@@ -55,6 +82,10 @@ interface BridgeStore {
   bannedUsers: string[]
   filteredWords: string[]
   pendingCount: number
+  // Hafıza
+  memoryStats: MemoryStats | null
+  memoryUsers: UserMemory[]
+  memoryUserDetail: UserMemory | null
 
   // actions
   setConnected: (v: boolean) => void
@@ -67,6 +98,9 @@ interface BridgeStore {
   setBannedUsers: (u: string[]) => void
   setFilteredWords: (w: string[]) => void
   clearMessages: () => void
+  setMemoryStats: (s: MemoryStats) => void
+  setMemoryUsers: (u: UserMemory[]) => void
+  setMemoryUserDetail: (u: UserMemory | null) => void
 }
 
 const initialState: StreamState = {
@@ -89,6 +123,9 @@ export const useBridge = create<BridgeStore>((set) => ({
   bannedUsers: [],
   filteredWords: [],
   pendingCount: 0,
+  memoryStats: null,
+  memoryUsers: [],
+  memoryUserDetail: null,
 
   setConnected: (v) => set({ connected: v }),
   setState: (s) => set({ state: s }),
@@ -111,6 +148,9 @@ export const useBridge = create<BridgeStore>((set) => ({
   setBannedUsers: (u) => set({ bannedUsers: u }),
   setFilteredWords: (w) => set({ filteredWords: w }),
   clearMessages: () => set({ messages: [], pendingCount: 0 }),
+  setMemoryStats: (s) => set({ memoryStats: s }),
+  setMemoryUsers: (u) => set({ memoryUsers: u }),
+  setMemoryUserDetail: (u) => set({ memoryUserDetail: u }),
 }))
 
 // ============================================================================
@@ -148,6 +188,16 @@ export function initBridge() {
   s.on('gift:event', (g: GiftEvent) => store.getState().addGift(g))
   s.on('ban:list', (u: string[]) => store.getState().setBannedUsers(u))
   s.on('filter:list', (w: string[]) => store.getState().setFilteredWords(w))
+
+  // Hafıza event'leri
+  s.on('memory:stats', (stats: MemoryStats) => store.getState().setMemoryStats(stats))
+  s.on('memory:list', (users: UserMemory[]) => store.getState().setMemoryUsers(users))
+  s.on('memory:user-detail', (user: UserMemory | null) => store.getState().setMemoryUserDetail(user))
+  s.on('memory:updated', () => {
+    // Trigger refresh
+    s.emit('memory:stats:get', {})
+    s.emit('memory:list', { limit: 50, sortBy: 'messageCount' })
+  })
 
   return s
 }

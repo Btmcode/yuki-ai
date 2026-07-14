@@ -61,6 +61,8 @@ server.log
 /.zscripts/
 /mini-services/*/node_modules/
 /mini-services/*/bridge.log
+/mini-services/*/memory.json
+/download/yuki-backend/memory.json
 
 # Python
 __pycache__/

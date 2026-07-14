@@ -8,6 +8,7 @@ import { DashboardSection } from '@/components/dashboard/sections/dashboard-sect
 import { ChatSection } from '@/components/dashboard/sections/chat-section'
 import { ControlSection } from '@/components/dashboard/sections/control-section'
 import { GiftsSection } from '@/components/dashboard/sections/gifts-section'
+import { MemorySection } from '@/components/dashboard/sections/memory-section'
 import { SettingsSection } from '@/components/dashboard/sections/settings-section'
 
 export default function Home() {
@@ -32,6 +33,7 @@ export default function Home() {
           {section === 'chat' && <ChatSection />}
           {section === 'control' && <ControlSection />}
           {section === 'gifts' && <GiftsSection />}
+          {section === 'memory' && <MemorySection />}
           {section === 'settings' && <SettingsSection />}
         </main>
       </div>
