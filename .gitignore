@@ -52,3 +52,25 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Yuki project specific
+/db/*.db
+/db/*.db-journal
+/logs/
+/worklog.md
+/.zscripts/
+/mini-services/*/node_modules/
+/mini-services/*/bridge.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Generated audio files (large)
+/download/tiktok-growth-pack/sesler/*.mp3
+
+# Keep .env.example though
+!.env.example
