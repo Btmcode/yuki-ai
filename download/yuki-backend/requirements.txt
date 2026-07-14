@@ -1,11 +1,17 @@
 # TikTokLive (TikTok Live API wrapper)
 TikTokLive==7.0.0
 
-# Google Gemini (LLM)
+# Google Gemini — yeni SDK (TTS + LLM)
+google-genai>=1.0.0
+
+# Eski Gemini SDK (geri uyumluluk için — kullanımdan kalktı)
 google-generativeai==0.8.3
 
-# ElevenLabs (TTS)
+# ElevenLabs (opsiyonel — premium TTS, ücretsiz tier 10k char/ay)
 elevenlabs==1.4.1
+
+# gTTS (fallback TTS — her zaman çalışır, ücretsiz)
+gTTS==2.2.4
 
 # OBS WebSocket
 obsws-python==5.0.0
@@ -13,11 +19,11 @@ obsws-python==5.0.0
 # Socket.IO client (bridge ile iletişim)
 python-socketio[client]==5.11.0
 
-# Dotenv
+# Dotenv (.env dosyası okuma)
 python-dotenv==1.0.1
 
 # HTTP
 requests==2.32.3
 
-# Audio (TTS çıktısını çalmak için)
-pyaudio==0.2.14
+# Audio (TTS çıktısını çalmak için — sadece gerçek makinede gerekli)
+# pyaudio==0.2.14  # sandbox'ta gerek yok, lokal makinede aç

@@ -42,7 +42,7 @@ export function ChatSection() {
   const others = messages
 
   return (
-    <div className="grid h-full gap-4 p-4 lg:grid-cols-3 lg:p-6">
+    <div className="grid h-full gap-3 p-3 sm:gap-4 sm:p-4 lg:grid-cols-3 lg:p-6">
       {/* Pending approval — only visible when autonomy != full */}
       {state.autonomyMode !== 'full' && (
         <Card className="border-amber-500/30 bg-amber-500/5 lg:col-span-1 lg:max-h-[calc(100vh-8rem)]">

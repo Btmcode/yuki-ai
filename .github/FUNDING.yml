@@ -1,0 +1,20 @@
+# GitHub Sponsors / Donate configuration
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+
+# GitHub Sponsors
+github: [Btmcode]
+
+# Buy Me a Coffee
+buy_me_a_coffee: yuki-ai
+
+# Custom site (website)
+# custom: ["https://yuki-ai.example.com", "https://linktr.ee/yuki-ai"]
+
+# Patreon (if you have one)
+# patreon: yuki-ai
+
+# Ko-fi
+# ko_fi: yuki-ai
+
+# Open Collective
+# open_collective: yuki-ai

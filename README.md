@@ -3,6 +3,8 @@
 > Türkiye'nin ilk AI VTuber'ı **Yuki** için geliştirilmiş, web panel + Python backend + içerik paketi içeren tam sistem.
 > Sıfır bütçe ile TikTok'ta 1000 takipçi → Live yayını → para kazanma hedefi.
 
+**Dil / Language:** 🇹🇷 Türkçe | [🇬🇧 English](docs/README.en.md)
+
 ![Yuki](public/avatars/yuki-portrait.png)
 
 ---
@@ -73,6 +75,10 @@ python main.py  # Terminal 3'te
 - 📱 [TikTok Büyüme Paketi](download/tiktok-growth-pack/README.md) — 30 günlük plan + senaryolar
 - 🎀 [TikTok Hesap Kurulumu](download/tiktok-growth-pack/rehberler/01-tiktok-hesap-kurulumu.md)
 - 🔑 [API Key Rehberi](download/tiktok-growth-pack/rehberler/02-api-key-rehberi.md)
+- 📝 [TikTok Biyografi Rehberi](download/tiktok-growth-pack/rehberler/03-tiktok-biyografi.md)
+- 🔄 [Session ID Alma Rehberi (Mobil Dahil)](download/tiktok-growth-pack/rehberler/04-session-id-rehberi.md)
+- 🗺️ [Proje Fazları (Roadmap)](docs/ROADMAP.md)
+- 🇬🇧 [English Documentation](docs/README.en.md)
 
 ---
 
@@ -170,6 +176,19 @@ Detaylar: [Python Backend README](download/yuki-backend/README.md)
 ## 📝 Lisans
 
 MIT License — dilediğin gibi kullan, değiştir, paylaş.
+
+---
+
+## 💖 Destek / Bağış
+
+Bu proje sana yardımcı olduysa, destek ol:
+
+- ☕ [Buy Me a Coffee](https://www.buymeacoffee.com/yuki-ai) — bana bir kahve ısmarla
+- 💖 GitHub Sponsors: [@Btmcode](https://github.com/sponsors/Btmcode) — aylık destek ol
+- 📧 İletişim: [yuki.ai@example.com](mailto:yuki.ai@example.com) — iş birliği için
+- 🌟 Repo'ya yıldız ver — ücretsiz destek!
+
+> **Not:** Bağış链接leri örnektir. Kendi linklerini `FUNDING.yml` dosyasına ekleyebilirsin (bkz. `.github/FUNDING.yml`).
 
 ---
 
