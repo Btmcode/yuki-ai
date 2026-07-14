@@ -17,7 +17,8 @@ export const metadata: Metadata = {
   title: "Yuki AI — TikTok Streamer Control Panel",
   description: "Otonom AI TikTok fenomeni yönetim paneli — canlı yayın, sohbet, hediye takibi.",
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/avatars/yuki-chibi.png",
+    apple: "/avatars/yuki-chibi.png",
   },
 };
 

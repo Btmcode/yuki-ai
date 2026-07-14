@@ -28,27 +28,32 @@ export function Sidebar({ active, onChange }: SidebarProps) {
       <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-rose-500/10 bg-zinc-950/50">
         <div className="flex h-full flex-col gap-2 p-3">
           {/* Karakter kartı */}
-          <div className="mb-2 rounded-xl border border-rose-500/20 bg-gradient-to-br from-rose-500/10 via-pink-500/5 to-transparent p-4">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-rose-400 to-fuchsia-500 text-xl font-bold text-white shadow-lg shadow-rose-500/30">
-                  雪
+          <div className="mb-2 overflow-hidden rounded-xl border border-rose-500/20 bg-gradient-to-br from-rose-500/10 via-pink-500/5 to-transparent">
+            {/* Avatar görsel */}
+            <div className="relative aspect-square overflow-hidden">
+              { }
+              <img
+                src="/avatars/yuki-avatar.png"
+                alt="Yuki karakter avatarı"
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent" />
+              {/* Live badge overlay */}
+              {state.isLive && (
+                <div className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-rose-600/90 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur">
+                  <span className="h-1.5 w-1.5 rounded-full bg-white live-dot" />
+                  CANLI
                 </div>
-                <span
-                  className={cn(
-                    'absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-zinc-950',
-                    state.isLive ? 'bg-rose-500 live-dot' : 'bg-zinc-600'
-                  )}
-                />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">Yuki</p>
-                <p className="truncate text-[11px] text-zinc-400">
+              )}
+              {/* İsim overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-3">
+                <p className="text-sm font-bold text-white drop-shadow">Yuki 雪</p>
+                <p className="truncate text-[11px] text-zinc-300">
                   {state.isLive ? `@${state.tiktokUser}` : 'Yayın offline'}
                 </p>
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between text-[11px]">
+            <div className="flex items-center justify-between p-3 text-[11px]">
               <span className="text-zinc-400">Ruh hali</span>
               <MoodPill mood={state.mood} />
             </div>

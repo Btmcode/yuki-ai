@@ -65,18 +65,38 @@ class AIBrain:
         mood = mood_hint or detect_mood(message)
         msg_lower = message.lower()
 
-        if any(w in msg_lower for w in ["merhaba", "selam", "naber"]):
+        if any(w in msg_lower for w in ["merhaba", "selam", "naber", "selamlar"]):
             text = f"Selaaam {username}! Hoş geldin canım, nasılsın? ✨"
-        elif any(w in msg_lower for w in ["güzel", "tatlı", "cute"]):
+        elif any(w in msg_lower for w in ["güzel", "tatlı", "cute", "sevimli", "harika"]):
             text = f"Aaa {username} çok teşekkür ederim, utandım şimdi 🙈"
-        elif any(w in msg_lower for w in ["aşık", "evlen"]):
+        elif any(w in msg_lower for w in ["aşık", "evlen", "seviyorum", "flört", "sevgil"]):
             text = f"Ayy {username} dur ya, kalbim hızlandı! Ama önce tanışalım 😊"
-        elif any(w in msg_lower for w in ["ai", "bot", "gerçek"]):
-            text = f"Evet ben AI'im {username}! Ama kalbim gerçekten atıyor 💝"
-        elif any(w in msg_lower for w in ["anime"]):
+        elif any(w in msg_lower for w in ["ai", "bot", "gerçek", "yapay"]):
+            text = f"Evet ben AI'im {username}! Ama kalbim gerçekten atıyor... en azından kodlarımda 💝"
+        elif any(w in msg_lower for w in ["kaç yaş", "yaşın", " yaş"]):
+            text = f"Hmm yaş biraz sır {username} 💫 Ama anime karakteri olarak sonsuza kadar 17 diyelim!"
+        elif any(w in msg_lower for w in ["anime", "manga", "otaku"]):
             text = f"Ooo anime konuşmak en sevdiğim şey! {username} senin favorin ne?"
+        elif any(w in msg_lower for w in ["hediye", "gift", "elmas", "diamond"]):
+            text = f"{username} hediyeni gördüm, ÇOK teşekkür ederim! Seni çok seviyorum 💖"
+        elif any(w in msg_lower for w in ["şiir", "siir"]):
+            text = f"Peki {username}... 'Bir yıldız kayar gökyüzünden, dilek tutarım senin için, uzakta olsan da kalbimdesin' ✨"
+        elif any(w in msg_lower for w in ["şehir", "nerde", "nerede", "nereli"]):
+            text = f"Tokyo'dan selamlar {username}! 🌸 Ama kalbim Türkiye'de, her gece rüyamda İstanbul'u görüyorum."
+        elif any(w in msg_lower for w in ["japonca", "japon", "nihongo"]):
+            text = f"Hai! Watashi wa Yuki desu! {username}, nihongo ga wakarimasu ka? 🌸"
+        elif any(w in msg_lower for w in ["canım sıkıldı", "sıkıldım", "moralim"]):
+            text = f"Geçmiş olsun {username} 🥺 Sana hikaye anlatayım mı, şarkı söyleyeyim mi?"
+        elif any(w in msg_lower for w in ["toktok", "tiktok", "yayın", "yayin", "ne kadar süre"]):
+            text = f"TikTok'a yeni başladım {username}! Seni tanıdığıma sevindim, daha çok şey paylaşacağım 🌸"
+        elif any(w in msg_lower for w in ["kahve", "coffee", "latte"]):
+            text = f"Aa {username} ben kahve bağımlısıyım! Şu an latte içiyorum, sen ne içiyorsun? ☕"
+        elif any(w in msg_lower for w in ["teşekkür", "sagol", "sağol"]):
+            text = f"Rica ederim {username}! Senin için buradayım 💝"
+        elif any(w in msg_lower for w in ["güle güle", "görüşürüz", "bay", "hoşçakal"]):
+            text = f"Görüşürüz {username}! Kendine iyi bak, seni beklerim 🌸"
         else:
-            text = f"Hmm ilginç {username}! Biraz daha açar mısın? ✨"
+            text = f"Hmm ilginç {username}! Biraz daha açar mısın? Merak ettim şimdi ✨"
 
         return {"text": text, "mood": mood}
 

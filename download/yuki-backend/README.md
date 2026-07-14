@@ -7,14 +7,45 @@
 ## 📋 İçindekiler
 
 1. [Sistem Mimarisi](#-sistem-mimarisi)
-2. [Sıfır Bütçe Yol Haritası](#-sıfır-bütçe-yol-haritası)
-3. [Kurulum — Web Panel](#-kurulum--web-panel-nextjs)
-4. [Kurulum — Python Backend](#-kurulum--python-backend)
-5. [Kurulum — OBS Studio](#-kurulum--obs-studio)
-6. [Kurulum — TikTok Live](#-kurulum--tiktok-live)
-7. [Çalıştırma](#-çalıştırma)
-8. [Riskler ve Yasal Uyarılar](#-riskler-ve-yasal-uyarılar)
-9. [Sorun Giderme](#-sorun-giderme)
+2. [Hızlı Başlangıç (5 Dakika)](#-hızlı-başlangıç-5-dakika)
+3. [Sıfır Bütçe Yol Haritası](#-sıfır-bütçe-yol-haritası)
+4. [Kurulum — Web Panel](#-kurulum--web-panel-nextjs)
+5. [Kurulum — Python Backend](#-kurulum--python-backend)
+6. [Kurulum — OBS Studio](#-kurulum--obs-studio)
+7. [Kurulum — Live2D Avatar (VTube Studio)](#-kurulum--live2d-avatar-vtube-studio)
+8. [Kurulum — TikTok Live](#-kurulum--tiktok-live)
+9. [Çalıştırma](#-çalıştırma)
+10. [Riskler ve Yasal Uyarılar](#-riskler-ve-yasal-uyarılar)
+11. [Sorun Giderme](#-sorun-giderme)
+
+---
+
+## ⚡ Hızlı Başlangıç (5 Dakika)
+
+Sadece web paneli ve simülasyon modunu denemek için:
+
+```bash
+# 1. Projeye git
+cd /home/z/my-project
+
+# 2. Tek komutla başlat
+./start.sh
+```
+
+Bu komut:
+- ✅ Bridge service'i başlatır (port 3003)
+- ✅ Next.js panel'i başlatır (port 3000)
+- ✅ Tarayıcıda açman için URL verir
+
+**Aç:** `http://localhost:81` (Caddy gateway üzerinden)
+
+Panelde:
+1. Sağ üstteki **"Yayını Başlat"** butonuna bas
+2. **"Canlı Sohbet"** sekmesine geç — sahte TikTok yorumları gelmeye başlar
+3. AI her yoruma cevap üretir, **"Onayla"/"Reddet"** ile yönet
+4. **"AI Kontrol"** sekmesinden otonomi modunu değiştir (Manuel/Yarı/Tam)
+
+Gerçek TikTok + Gemini + ElevenLabs + OBS entegrasyonu için aşağıdaki tam kurulum adımlarını izle.
 
 ---
 
@@ -246,6 +277,88 @@ Eğer bazı bileşenler "✗ (pasif)" görünüyorsa, ilgili API anahtarı eksik
 
 ---
 
+## 🎀 Kurulum — Live2D Avatar (VTube Studio)
+
+Anime karakterini (Yuki) canlı yayında göstermek için Live2D avatar kullanıyoruz.
+
+### Seçenek 1: Hazır Ücretsiz Avatar İndir (Hızlı)
+
+1. ** Booth.pm** — Japon VTuber pazarı, birçok ücretsiz model var
+   - https://booth.pm/en-us/browse/Live2D
+   - "Free" filtresi uygula, ara: "free VTuber model"
+   - TikTok-friendly: kawaii, pastel, anime tarzı
+
+2. **VRoid Hub** — VRoid Studio ile oluşturulmuş ücretsiz modeller
+   - https://hub.vroid.com/en
+   - "Free to use" filtrele
+   - Live2D'ye çevirmek için ekstra adım gerekir
+
+3. **Nizima** — Live2D model pazarı
+   - https://nizimaplus.com/
+   - Free kategorisi var
+
+### Seçenek 2: Kendi Avatarını Yap (Ücretsiz)
+
+1. **Live2D Cubism Free** yükle
+   - https://www.live2d.com/en/cubism/download/
+   - Free tier yeterli (ticari kullanım için Pro gerekir)
+
+2. **Karakter çizimi**
+   - Clip Studio Paint (ücretli) veya Krita (ücretsiz) ile çiz
+   - Katman katman ayır: gözler, ağız, kaşlar, saç öbekleri, vb.
+   - PSD formatında dışa aktar
+
+3. **Cubism'te modelle**
+   - PSD'yi import et
+   - Her parçaya "deformer" ekle (göz kırpma, ağız açma)
+   - Movement parametreleri tanımla (nefes, baş sallama)
+   - .model3.json olarak export et
+
+### VTube Studio Kurulumu
+
+1. **Steam'den yükle** (ücretsiz)
+   - https://store.steampowered.com/app/1486800/VTube_Studio/
+
+2. **Avatar yükle**
+   - VTube Studio > "Add Model" > .model3.json dosyasını seç
+   - Avatarı ekranda konumlandır
+
+3. **Lip-sync ayarı** (TTS sesine dudak oynatma)
+   - VTube Studio > Settings > "Lip Sync"
+   - "Microphone" yerine **"System Audio"** seç (TTS çıktısını yakala)
+   - Veya "Audio File Input" ile TTS ses dosyasını seç
+
+4. **Kamera hareketi** (head tracking)
+   - Webcam aç
+   - VTube Studio > Face Tracking > Start
+   - Kameraya baktıkça avatar takip eder
+
+5. **OBS entegrasyonu**
+   - OBS'te "Game Capture" veya "Window Capture" ekle
+   - Hedef: "VTube Studio"
+   - VTube Studio'da "Transparent Background" aç (chroma key gerekmez)
+
+### AI Sesine Lip-Sync (Otomatik)
+
+Sistem zaten otomatik lip-sync yapıyor:
+1. `obs_controller.py` TTS sesini "YukiVoice" source'a yükler
+2. Aynı anda "YukiAvatar" source'da lip-sync filter 3 saniye açılır
+3. Ses bittiğinde filter otomatik kapanır
+
+**OBS'te gerekli source'lar:**
+- `YukiVoice` (Media Source) — TTS ses dosyası çalar
+- `YukiAvatar` (Window Capture) — VTube Studio penceresi
+
+### Avatarı Özelleştirme
+
+`persona.py` dosyasını düzenleyerek karakteri özelleştir:
+- **İsim** (Yuki → başka isim)
+- **Kişilik** (flörtöz → utangaç, sakin, vb.)
+- **Lore** (Tokyo → başka şehir, başka backstory)
+- **System prompt** — LLM'e verilen tüm talimat
+
+---
+
 ## 🎵 Kurulum — TikTok Live
 
 ### TikTokLive Library
@@ -277,6 +390,28 @@ Yeni açılan hesap Live yetkisi alamaz. Önce organik içerikle takipçi topla.
 
 ## ▶️ Çalıştırma
 
+### Yöntem 1: Tek Komutla (Önerilen)
+
+`start.sh` script'i 3 servisi birden başlatır:
+
+```bash
+cd /home/z/my-project
+
+# Sadece web panel + bridge (simülasyon modu — API key gerekmez)
+./start.sh
+
+# Tam sistem (Python backend dahil — API key gerekir)
+./start.sh --full
+
+# Durum kontrolü
+./start.sh --status
+
+# Tüm servisleri durdur
+./start.sh --stop
+```
+
+### Yöntem 2: Manuel (3 Terminal)
+
 Tüm sistem çalışırken **3 terminal** açık olmalı:
 
 ```bash
@@ -288,29 +423,70 @@ bun run dev
 cd /home/z/my-project
 bun run dev
 
-# Terminal 3 — Python backend
+# Terminal 3 — Python backend (gerçek mod için)
 cd /home/z/my-project/download/yuki-backend
 source venv/bin/activate
 python main.py
 ```
 
-Ayrıca:
-- OBS Studio açık ve "Yuki Live" sahnesi seçili
-- VTube Studio açık ve avatar aktif
-- TikTok hesabı Live yetkisi olan bir hesap
+### Yöntem 3: Sadece Web Panel Testi
 
-### Çalışma Akışı
+Hiçbir API key olmadan, sadece simülasyon modunu denemek için:
 
-1. Web paneli aç (`http://localhost:81`)
-2. **AI Kontrol** sekmesinden otonomi modunu seç (önce "Manuel" ile başla)
-3. **Ayarlar > TikTok Bağlantısı**'ndan hesap adını doğrula
-4. **Yayını Başlat**'a bas
-5. OBS otomatik TikTok'a yayın başlatır
-6. TikTok yorumları panelde görünmeye başlar
-7. AI her yoruma cevap üretir:
-   - **Manuel modda**: Sen "Onayla"/"Reddet" basana kadar bekler
+```bash
+# Terminal 1
+cd /home/z/my-project/mini-services/tiktok-bridge
+bun install && bun run dev
+
+# Terminal 2
+cd /home/z/my-project
+bun install && bun run dev
+```
+
+Tarayıcıda `http://localhost:81` aç. Bu modda:
+- ✅ Web panel çalışır
+- ✅ Sahte TikTok yorumları gelir
+- ✅ AI kural-bazlı cevaplar üretir (LLM yok)
+- ✅ Onay/red mekanizması çalışır
+- ❌ Gerçek TikTok bağlantısı yok
+- ❌ TTS ses çıkmaz
+- ❌ OBS entegrasyonu yok
+
+### Çalışma Akışı (Gerçek Mod)
+
+1. **Hazırlık**
+   - OBS Studio aç, "Yuki Live" sahnesini seç
+   - VTube Studio aç, avatarı aktif et
+   - TikTok hesabında Live yetkisi olduğundan emin ol
+
+2. **Sistemi başlat**
+   ```bash
+   ./start.sh --full
+   ```
+
+3. **Web paneli aç** (`http://localhost:81`)
+
+4. **Ayarları doğrula**
+   - **Ayarlar > TikTok Bağlantısı** → TikTok kullanıcı adını gir
+   - **Ayarlar > API Anahtarları** → tüm anahtarlar dolu mu kontrol et
+
+5. **Otonomi modunu seç**
+   - **AI Kontrol** sekmesi
+   - İlk başta **Manuel** modda başla (her cevabı sen onayla)
+
+6. **Yayını Başlat**
+   - Sağ üstteki buton
+   - OBS otomatik TikTok'a RTMP yayın başlatır
+   - TikTok yorumları panelde görünmeye başlar
+
+7. **AI cevapları yönet**
+   - **Manuel modda**: AI her yoruma cevap üretir, sen "Onayla"/"Reddet" basana kadar bekler
    - **Yarı Otonom modda**: Otomatik cevaplar ama yasaklı içerik filtrelenir, acil stop aktif
-   - **Tam Otonom modda**: 7/24 kendisi cevaplar (RİSKLİ)
+   - **Tam Otonom modda**: 7/24 kendisi cevaplar (RİSKLİ — önerilmez)
+
+8. **Yayını kapat**
+   - "Yayını Kapat" butonu
+   - Acil durumda "Acil Stop" → her şey anında durur
 
 ---
 

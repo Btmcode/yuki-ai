@@ -36,8 +36,9 @@ export function Header() {
       <div className="flex h-16 items-center gap-4 px-4 lg:px-6">
         {/* Logo / Brand */}
         <div className="flex items-center gap-3">
-          <div className="relative grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-500 shadow-lg shadow-rose-500/30">
-            <span className="text-lg font-bold text-white">雪</span>
+          <div className="relative h-10 w-10 overflow-hidden rounded-xl border border-rose-500/30 shadow-lg shadow-rose-500/30">
+            { }
+            <img src="/avatars/yuki-chibi.png" alt="Yuki" className="h-full w-full object-cover" />
           </div>
           <div className="hidden md:block">
             <p className="text-sm font-semibold leading-tight text-white">Yuki AI</p>

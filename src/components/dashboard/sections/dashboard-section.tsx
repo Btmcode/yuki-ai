@@ -155,24 +155,56 @@ export function DashboardSection() {
       </div>
 
       {/* Persona card */}
-      <Card className="border-rose-500/20 bg-gradient-to-br from-rose-500/5 via-fuchsia-500/5 to-transparent">
-        <CardContent className="p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-rose-400 to-fuchsia-500 text-3xl font-bold text-white shadow-xl shadow-rose-500/30">
-              雪
+      <Card className="overflow-hidden border-rose-500/20 bg-gradient-to-br from-rose-500/5 via-fuchsia-500/5 to-transparent">
+        <CardContent className="p-0">
+          <div className="flex flex-col md:flex-row">
+            {/* Portrait görsel */}
+            <div className="relative aspect-[3/4] md:aspect-auto md:w-48 shrink-0 overflow-hidden">
+              { }
+              <img
+                src="/avatars/yuki-portrait.png"
+                alt="Yuki karakter portresi"
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent md:bg-gradient-to-r" />
+              <div className="absolute bottom-2 left-2 md:bottom-3 md:left-3">
+                <p className="text-xs font-bold text-white drop-shadow">雪 Yuki</p>
+                <p className="text-[10px] text-zinc-300 drop-shadow">Tokyo · 17</p>
+              </div>
             </div>
-            <div className="flex-1">
+            {/* Bilgi */}
+            <div className="flex-1 p-5">
               <h3 className="text-lg font-semibold text-white">Yuki — Dijital Fenomen</h3>
-              <p className="mt-1 text-sm text-zinc-400">
-                17 yaşında anime karakteri, Tokyo'dan. Samimi, flörtöz ama sınırları koruyan.
-                Türk izleyicisine özel ilgi gösterir, Japon kültürü referansları sever.
+              <p className="mt-1 text-sm leading-relaxed text-zinc-400">
+                17 yaşında anime karakteri, Tokyo'dan gelen dijital VTuber. Samimi, flörtöz ama sınırları koruyan.
+                Türk izleyicisine özel ilgi gösterir, isimleriyle hitap eder. Japon kültürü referansları
+                ve anime sohbetlerini sever. AI olduğunu gizlemez — dürüst ve şeffaftır.
               </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
+              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <p className="text-zinc-500">Sevdiği anime</p>
+                  <p className="text-zinc-300">Naruto, Violet Evergarden</p>
+                </div>
+                <div>
+                  <p className="text-zinc-500">Diller</p>
+                  <p className="text-zinc-300">Türkçe, Japonca, İngilizce</p>
+                </div>
+                <div>
+                  <p className="text-zinc-500">İlgi alanları</p>
+                  <p className="text-zinc-300">ASMR, kahve, yıldızlar</p>
+                </div>
+                <div>
+                  <p className="text-zinc-500">Şehir</p>
+                  <p className="text-zinc-300">Tokyo, Japonya</p>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 <Badge variant="outline" className="border-rose-500/30 text-rose-300">
                   <Heart className="mr-1 h-2.5 w-2.5" /> Alara-tarzı
                 </Badge>
                 <Badge variant="outline" className="border-zinc-700 text-zinc-400">Kontrollü Otonom</Badge>
                 <Badge variant="outline" className="border-zinc-700 text-zinc-400">Türkçe</Badge>
+                <Badge variant="outline" className="border-zinc-700 text-zinc-400">VTuber</Badge>
               </div>
             </div>
           </div>
