@@ -1,0 +1,23 @@
+# TikTokLive (TikTok Live API wrapper)
+TikTokLive==7.0.0
+
+# Google Gemini (LLM)
+google-generativeai==0.8.3
+
+# ElevenLabs (TTS)
+elevenlabs==1.4.1
+
+# OBS WebSocket
+obsws-python==5.0.0
+
+# Socket.IO client (bridge ile iletişim)
+python-socketio[client]==5.11.0
+
+# Dotenv
+python-dotenv==1.0.1
+
+# HTTP
+requests==2.32.3
+
+# Audio (TTS çıktısını çalmak için)
+pyaudio==0.2.14

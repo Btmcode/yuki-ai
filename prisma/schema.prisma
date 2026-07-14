@@ -1,0 +1,79 @@
+// AI TikTok Streamer — Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model StreamSession {
+  id           String   @id @default(cuid())
+  tiktokUser   String
+  status       String   @default("idle") // idle | live | paused | ended
+  startTime    DateTime?
+  endTime      DateTime?
+  peakViewers  Int      @default(0)
+  totalGifts   Int      @default(0)
+  totalDiamonds Int     @default(0)
+  autonomyMode String   @default("semi") // manual | semi | full
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  messages     ChatMessage[]
+  gifts        Gift[]
+}
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  sessionId  String?
+  username   String
+  content    String
+  source     String   @default("user") // user | ai | system
+  status     String   @default("auto") // pending | approved | rejected | auto | sent
+  aiResponse String?  // AI proposed response (when source=user)
+  mood       String?  // happy | flirty | shy | excited | calm | angry
+  timestamp  DateTime @default(now())
+
+  session    StreamSession? @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId])
+  @@index([timestamp])
+}
+
+model Gift {
+  id           String   @id @default(cuid())
+  sessionId    String?
+  username     String
+  giftName     String
+  giftCount    Int      @default(1)
+  diamondCount Int      @default(0)
+  imageUrl     String?
+  timestamp    DateTime @default(now())
+
+  session      StreamSession? @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId])
+  @@index([timestamp])
+}
+
+model BannedUser {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+model FilteredWord {
+  id        String   @id @default(cuid())
+  word      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
