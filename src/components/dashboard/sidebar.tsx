@@ -109,9 +109,9 @@ export function Sidebar({ active, onChange }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-rose-500/15 bg-zinc-950/95 backdrop-blur-xl">
-        <div className="grid grid-cols-5">
+      {/* Mobile bottom nav — 6 sütun (6 sekme: Genel, Canlı, AI, Hediyeler, Hafıza, Ayarlar) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-rose-500/15 bg-zinc-950/95 backdrop-blur-xl safe-area-bottom">
+        <div className="grid grid-cols-6">
           {NAV.map((item) => {
             const Icon = item.icon
             const isActive = active === item.id
@@ -120,15 +120,20 @@ export function Sidebar({ active, onChange }: SidebarProps) {
                 key={item.id}
                 onClick={() => onChange(item.id)}
                 className={cn(
-                  'relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] transition-colors',
+                  'relative flex flex-col items-center gap-0.5 py-2 text-[9px] transition-colors min-h-[44px]',
                   isActive ? 'text-rose-400' : 'text-zinc-500'
                 )}
               >
                 <Icon className="h-4 w-4" />
-                <span>{item.label.split(' ')[0]}</span>
+                <span className="truncate max-w-full px-0.5">{item.label.split(' ')[0]}</span>
                 {item.id === 'chat' && pendingCount > 0 && (
-                  <span className="absolute right-2 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+                  <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
                     {pendingCount}
+                  </span>
+                )}
+                {item.id === 'memory' && (memoryStats?.returningToday ?? 0) > 0 && (
+                  <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-emerald-500 px-1 text-[9px] font-bold text-white">
+                    {memoryStats?.returningToday}
                   </span>
                 )}
               </button>

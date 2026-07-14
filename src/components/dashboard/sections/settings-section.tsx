@@ -75,18 +75,18 @@ Cevapların 1-2 cümle, doğal konuşma dilinde olur.`,
   return (
     <div className="p-4 lg:p-6">
       <Tabs defaultValue="tiktok" className="w-full">
-        <TabsList className="bg-zinc-900/60 border border-zinc-800">
-          <TabsTrigger value="tiktok" className="data-[state=active]:bg-rose-500/20 data-[state=active]:text-rose-300">
-            TikTok Bağlantısı
+        <TabsList className="bg-zinc-900/60 border border-zinc-800 overflow-x-auto flex-nowrap w-full max-w-full">
+          <TabsTrigger value="tiktok" className="data-[state=active]:bg-rose-500/20 data-[state=active]:text-rose-300 flex-1 min-w-0">
+            <span className="truncate">TikTok</span>
           </TabsTrigger>
-          <TabsTrigger value="api" className="data-[state=active]:bg-rose-500/20 data-[state=active]:text-rose-300">
-            API Anahtarları
+          <TabsTrigger value="api" className="data-[state=active]:bg-rose-500/20 data-[state=active]:text-rose-300 flex-1 min-w-0">
+            <span className="truncate">API</span>
           </TabsTrigger>
-          <TabsTrigger value="persona" className="data-[state=active]:bg-rose-500/20 data-[state=active]:text-rose-300">
-            Karakter
+          <TabsTrigger value="persona" className="data-[state=active]:bg-rose-500/20 data-[state=active]:text-rose-300 flex-1 min-w-0">
+            <span className="truncate">Karakter</span>
           </TabsTrigger>
-          <TabsTrigger value="moderation" className="data-[state=active]:bg-rose-500/20 data-[state=active]:text-rose-300">
-            Moderasyon
+          <TabsTrigger value="moderation" className="data-[state=active]:bg-rose-500/20 data-[state=active]:text-rose-300 flex-1 min-w-0">
+            <span className="truncate">Moderasyon</span>
           </TabsTrigger>
         </TabsList>
 
