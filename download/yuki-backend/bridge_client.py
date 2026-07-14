@@ -7,9 +7,20 @@ Next.js mini-service (port 3003) ile WebSocket üzerinden iletişim kurar.
 """
 import os
 import logging
-import socketio
 import asyncio
 from typing import Optional, Callable
+
+# Socket.IO (varsa yükle)
+try:
+    import socketio
+    SOCKETIO_AVAILABLE = True
+except ImportError:
+    SOCKETIO_AVAILABLE = False
+    socketio = None
+    logging.getLogger(__name__).warning(
+        "python-socketio yüklü değil — bridge iletişimi çalışamaz. "
+        "Yüklemek için: pip install python-socketio[client]"
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +38,14 @@ class BridgeClient:
         on_mode_change: Optional[Callable] = None,
     ):
         self.url = url
-        self.sio = socketio.Client(logger=False, engineio_logger=False)
         self.connected = False
+        self.sio = None
+
+        if not SOCKETIO_AVAILABLE:
+            logger.error("socketio modülü yok — BridgeClient oluşturuldu ama kullanılamaz")
+            return
+
+        self.sio = socketio.Client(logger=False, engineio_logger=False)
 
         # Event handler'lar
         self.on_ai_approved = on_ai_approved
@@ -39,7 +56,8 @@ class BridgeClient:
         self.on_mood_change = on_mood_change
         self.on_mode_change = on_mode_change
 
-        self._register_handlers()
+        if self.sio:
+            self._register_handlers()
 
     def _register_handlers(self):
         @self.sio.event
@@ -112,6 +130,9 @@ class BridgeClient:
 
     def connect_async(self):
         """Background thread'de bağlan"""
+        if not self.sio:
+            logger.error("socketio yok — bağlanılamaz")
+            return False
         try:
             self.sio.connect(self.url, transports=["websocket", "polling"])
             return True
@@ -120,39 +141,44 @@ class BridgeClient:
             return False
 
     def disconnect(self):
-        if self.connected:
+        if self.connected and self.sio:
             self.sio.disconnect()
 
     # === TikTok olaylarını bridge'e ilet ===
 
     def emit_comment(self, username: str, content: str):
         """TikTok yorumunu bridge'e gönder"""
-        self.sio.emit("tiktok:comment", {
-            "username": username,
-            "content": content,
-        })
+        if self.sio and self.connected:
+            self.sio.emit("tiktok:comment", {
+                "username": username,
+                "content": content,
+            })
 
     def emit_gift(self, username: str, gift_name: str, gift_count: int, diamond_count: int):
         """TikTok hediyesini bridge'e gönder"""
-        self.sio.emit("tiktok:gift", {
-            "username": username,
-            "giftName": gift_name,
-            "giftCount": gift_count,
-            "diamondCount": diamond_count,
-        })
+        if self.sio and self.connected:
+            self.sio.emit("tiktok:gift", {
+                "username": username,
+                "giftName": gift_name,
+                "giftCount": gift_count,
+                "diamondCount": diamond_count,
+            })
 
     def emit_viewer_count(self, count: int):
         """İzleyici sayısını bridge'e gönder"""
-        self.sio.emit("tiktok:viewer_count", {"count": count})
+        if self.sio and self.connected:
+            self.sio.emit("tiktok:viewer_count", {"count": count})
 
     def emit_ai_response(self, message_id: str, text: str, mood: str):
         """Üretilen AI cevabını bridge'e gönder"""
-        self.sio.emit("ai:response", {
-            "messageId": message_id,
-            "text": text,
-            "mood": mood,
-        })
+        if self.sio and self.connected:
+            self.sio.emit("ai:response", {
+                "messageId": message_id,
+                "text": text,
+                "mood": mood,
+            })
 
     def emit_tts_played(self, message_id: str):
         """TTS çalındı bilgisi"""
-        self.sio.emit("ai:tts_played", {"messageId": message_id})
+        if self.sio and self.connected:
+            self.sio.emit("ai:tts_played", {"messageId": message_id})

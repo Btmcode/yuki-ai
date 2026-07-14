@@ -10,7 +10,11 @@ google-generativeai==0.8.3
 # ElevenLabs (opsiyonel — premium TTS, ücretsiz tier 10k char/ay)
 elevenlabs==1.4.1
 
-# gTTS (fallback TTS — her zaman çalışır, ücretsiz)
+# Edge-TTS (Microsoft Neural TTS — çok akıcı Türkçe, ücretsiz)
+# Bu en iyi fallback — gTTS'ten çok daha doğal
+edge-tts>=7.0.0
+
+# gTTS (son çare TTS — her zaman çalışır ama robotik)
 gTTS==2.2.4
 
 # OBS WebSocket

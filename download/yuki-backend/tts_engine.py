@@ -206,7 +206,124 @@ class GttsProvider:
 
 
 # ============================================================================
-# Sağlayıcı 3: ElevenLabs (opsiyonel)
+# Sağlayıcı 3: Edge-TTS (Microsoft Neural TTS) — çok akıcı, ücretsiz
+# ============================================================================
+# Edge-TTS, Microsoft Azure Cognitive Services'in neural seslerini kullanır.
+# Türkçe için çok akıcı, doğal sesler sunar. gTTS'ten ÇOK daha iyi.
+#
+# Mevcut Türkçe sesler:
+#   - tr-TR-EmelNeural    (Kadın, sıcak, samimi — Yuki için ideal)
+#   - tr-TR-AhmetNeural   (Erkek, sıcak)
+#
+# Mood'a göre rate/pitch ayarlanır (daha doğal konuşma).
+class EdgeTTSProvider:
+    """Microsoft Edge TTS — neural sesler, çok akıcı, ücretsiz, her zaman çalışır"""
+
+    name = "Edge-TTS"
+
+    # Türkçe kadın ses (Yuki için ideal)
+    DEFAULT_VOICE = "tr-TR-EmelNeural"
+
+    # Mood'a göre rate/pitch/volume ayarları
+    MOOD_PROSODY = {
+        "happy":    {"rate": "+5%",  "pitch": "+2Hz",  "volume": "+0%"},
+        "flirty":   {"rate": "-5%",  "pitch": "+5Hz",  "volume": "+0%"},  # yavaş, tatlı
+        "shy":      {"rate": "-10%", "pitch": "-3Hz",  "volume": "-5%"},  # utangaç
+        "excited":  {"rate": "+15%", "pitch": "+8Hz",  "volume": "+10%"}, # hızlı, enerjik
+        "calm":     {"rate": "-15%", "pitch": "-5Hz",  "volume": "-10%"}, # yavaş, sakin (ASMR)
+        "angry":    {"rate": "+5%",  "pitch": "-8Hz",  "volume": "+15%"}, # sert, ciddi
+    }
+
+    def __init__(self, cache_dir: Path):
+        self.cache_dir = cache_dir
+        self.enabled = False
+        try:
+            import edge_tts
+            self._edge_tts = edge_tts
+            self.enabled = True
+            logger.info("✓ Edge-TTS sağlayıcı aktif (neural Türkçe ses)")
+        except ImportError:
+            logger.warning("edge-tts yüklü değil: pip install edge-tts")
+
+    async def _synthesize_async(self, text: str, voice: str, prosody: dict, output_path: str) -> bool:
+        """Async synthesize (edge-tts async API)"""
+        try:
+            communicate = self._edge_tts.Communicate(
+                text=text,
+                voice=voice,
+                rate=prosody.get("rate", "+0%"),
+                pitch=prosody.get("pitch", "+0Hz"),
+                volume=prosody.get("volume", "+0%"),
+            )
+            await communicate.save(output_path)
+            return True
+        except Exception as e:
+            logger.error(f"Edge-TTS async hatası: {e}")
+            return False
+
+    def synthesize(self, text: str, mood: str = "happy") -> Optional[str]:
+        if not self.enabled:
+            return None
+        try:
+            clean_text = strip_emoji(text)
+            if not clean_text:
+                return None
+
+            cache_path = self._cache_path(clean_text, mood)
+            if cache_path.exists():
+                logger.debug(f"Edge-TTS önbellek hit: {cache_path}")
+                return str(cache_path)
+
+            prosody = self.MOOD_PROSODY.get(mood, self.MOOD_PROSODY["happy"])
+            voice = self.DEFAULT_VOICE
+
+            # Async'i sync'a çevir (Python main thread'de çalışır)
+            import asyncio
+            try:
+                # Mevcut event loop varsa (async context)
+                loop = asyncio.get_running_loop()
+                # Yeni thread'de çalıştır
+                import threading
+                result = [False]
+                def run():
+                    new_loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(new_loop)
+                    try:
+                        result[0] = new_loop.run_until_complete(
+                            self._synthesize_async(clean_text, voice, prosody, str(cache_path))
+                        )
+                    finally:
+                        new_loop.close()
+                t = threading.Thread(target=run)
+                t.start()
+                t.join()
+                success = result[0]
+            except RuntimeError:
+                # Sync context — direkt çalıştır
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    success = loop.run_until_complete(
+                        self._synthesize_async(clean_text, voice, prosody, str(cache_path))
+                    )
+                finally:
+                    loop.close()
+
+            if success and cache_path.exists():
+                return str(cache_path)
+            return None
+
+        except Exception as e:
+            logger.error(f"Edge-TTS hatası: {e}")
+            return None
+
+    def _cache_path(self, text: str, mood: str) -> Path:
+        key = hashlib.md5(f"{text}_{mood}_edge".encode()).hexdigest()
+        return self.cache_dir / f"{key}.mp3"
+
+
+# ============================================================================
+# Sağlayıcı 4: ElevenLabs (opsiyonel)
 # ============================================================================
 class ElevenLabsProvider:
     """ElevenLabs — en kaliteli ama ücretsiz tier 10k karakter/ay limitli"""
@@ -276,8 +393,9 @@ class TTSEngine:
 
     Öncelik sırası:
       1. Gemini TTS (en kaliteli, ücretsiz, bölgesel kısıtlı)
-      2. ElevenLabs (premium, ücretsiz tier limitli)
-      3. gTTS (her zaman çalışır, ücretsiz, biraz robotik)
+      2. Edge-TTS (Microsoft Neural, çok akıcı, her zaman çalışır)
+      3. ElevenLabs (premium, ücretsiz tier limitli)
+      4. gTTS (son çare, her zaman çalışır, biraz robotik)
     """
 
     def __init__(self):
@@ -286,14 +404,20 @@ class TTSEngine:
 
         self.providers = []
 
-        # 1. Gemini TTS
+        # 1. Gemini TTS (en kaliteli ama bölgesel kısıtlı)
         gemini_key = os.getenv("GEMINI_API_KEY", "")
         if gemini_key:
             gemini = GeminiTTSProvider(gemini_key, self.cache_dir)
             if gemini.enabled:
                 self.providers.append(gemini)
 
-        # 2. ElevenLabs (opsiyonel)
+        # 2. Edge-TTS (Microsoft Neural — çok akıcı, ücretsiz, her zaman çalışır)
+        # Bu en iyi fallback — gTTS'ten çok daha doğal
+        edge = EdgeTTSProvider(self.cache_dir)
+        if edge.enabled:
+            self.providers.append(edge)
+
+        # 3. ElevenLabs (opsiyonel, premium)
         eleven_key = os.getenv("ELEVENLABS_API_KEY", "")
         eleven_voice = os.getenv("ELEVENLABS_VOICE_ID", "")
         if eleven_key and eleven_voice:
@@ -301,7 +425,7 @@ class TTSEngine:
             if eleven.enabled:
                 self.providers.append(eleven)
 
-        # 3. gTTS (her zaman)
+        # 4. gTTS (son çare — her zaman çalışır ama robotik)
         gtts = GttsProvider(self.cache_dir)
         if gtts.enabled:
             self.providers.append(gtts)

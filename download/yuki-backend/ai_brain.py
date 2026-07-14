@@ -13,7 +13,18 @@ import os
 import logging
 from typing import Optional
 from datetime import datetime
-import google.generativeai as genai
+
+# Google Gemini (varsa yükle, yoksa fallback modda çalış)
+try:
+    import google.generativeai as genai
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+    genai = None
+    logging.getLogger(__name__).warning(
+        "google.generativeai yüklü değil — Gemini API kullanılamaz. "
+        "Yüklemek için: pip install google-generativeai"
+    )
 
 from persona import (
     SYSTEM_PROMPT, detect_mood,
@@ -32,7 +43,8 @@ class AIBrain:
         """
         self.api_key = os.getenv("GEMINI_API_KEY", "")
         self.model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-        self.enabled = bool(self.api_key)
+        # API key VE gemai modülü yüklü olmalı
+        self.enabled = bool(self.api_key) and GEMINI_AVAILABLE
         self.memory = memory_store
 
         if self.enabled:

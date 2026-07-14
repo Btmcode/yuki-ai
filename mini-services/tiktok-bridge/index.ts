@@ -835,7 +835,7 @@ io.on('connection', (socket) => {
   })
 })
 
-io.listen(PORT, () => {
+io.httpServer.listen(PORT, () => {
   console.log(`[TikTok Bridge] WebSocket server running on port ${PORT}`)
 })
 
