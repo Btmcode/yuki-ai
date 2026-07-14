@@ -1,15 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Standalone output kaldırıldı — space-z.ai serverless deployment ile uyumsuz
+  // Standalone output — space-z.ai deployment platformu bunu bekliyor
+  // .next/standalone/server.js production server olarak çalışır
+  output: "standalone",
 
   // TypeScript hatalarını build sırasında yoksay (skills/ klasörü harici tutuluyor)
   typescript: {
     ignoreBuildErrors: true,
   },
-
-  // Not: Next.js 16'da eslint config artık next.config.ts'de değil
-  // Eski eslint.ignoreDuringBuilds kaldırıldı — build lint için ayrı komut kullan
 
   reactStrictMode: false,
 
