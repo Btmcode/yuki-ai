@@ -77,6 +77,7 @@ python main.py  # Terminal 3'te
 - 🔑 [API Key Rehberi](download/tiktok-growth-pack/rehberler/02-api-key-rehberi.md)
 - 📝 [TikTok Biyografi Rehberi](download/tiktok-growth-pack/rehberler/03-tiktok-biyografi.md)
 - 🔄 [Session ID Alma Rehberi (Mobil Dahil)](download/tiktok-growth-pack/rehberler/04-session-id-rehberi.md)
+- 🚀 [TikTok Developer API Rehberi (Resmi)](download/tiktok-growth-pack/rehberler/05-tiktok-developer-api-rehberi.md)
 - 🗺️ [Proje Fazları (Roadmap)](docs/ROADMAP.md)
 - 🇬🇧 [English Documentation](docs/README.en.md)
 
