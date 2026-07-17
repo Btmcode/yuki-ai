@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { UserPlus, Ban, Trash2, Plus, Key, Shield, Bot, Save } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { UserPlus, Ban, Trash2, Plus, Key, Shield, Bot, Save, CheckCircle2, RefreshCw, X, ExternalLink } from 'lucide-react'
 import { useBridge, getSocket } from '@/lib/bridge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -145,6 +145,9 @@ Cevapların 1-2 cümle, doğal konuşma dilinde olur.`,
                   </p>
                 </div>
               </div>
+
+              {/* TikTok OAuth — Resmi API Bağlantısı */}
+              <TikTokOAuthCard />
             </CardContent>
           </Card>
         </TabsContent>
@@ -381,6 +384,221 @@ Cevapların 1-2 cümle, doğal konuşma dilinde olur.`,
           </Card>
         </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+// ============================================================================
+// TikTok OAuth Card — Resmi API ile hesap bağlama
+// ============================================================================
+function TikTokOAuthCard() {
+  const [account, setAccount] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // URL params — TikTok callback'ten gelen error/success
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const tiktokError = params.get('tiktok_error')
+    const tiktokConnected = params.get('tiktok_connected')
+    if (tiktokError) {
+      setError(`Bağlantı hatası: ${tiktokError}`)
+    } else if (tiktokConnected === 'true') {
+      // URL'i temizle
+      window.history.replaceState({}, '', '/?section=tiktok')
+    }
+  }, [])
+
+  // Hesap durumunu getir
+  const fetchStatus = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await fetch('/api/tiktok/status')
+      const data = await res.json()
+      setAccount(data.connected ? data.account : null)
+      setError(null)
+    } catch (e) {
+      setError('Durum getirilemedi')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchStatus()
+  }, [fetchStatus])
+
+  const handleConnect = () => {
+    // TikTok OAuth başlat
+    window.location.href = '/api/tiktok/auth'
+  }
+
+  const handleDisconnect = async () => {
+    try {
+      await fetch('/api/tiktok/disconnect', { method: 'POST' })
+      setAccount(null)
+    } catch (e) {
+      setError('Bağlantı kesilemedi')
+    }
+  }
+
+  const handleSync = async () => {
+    try {
+      setSyncing(true)
+      const res = await fetch('/api/tiktok/sync', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        await fetchStatus()
+      } else {
+        setError(data.error || 'Senkronizasyon başarısız')
+      }
+    } catch (e) {
+      setError('Senkronizasyon hatası')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  return (
+    <div className="mt-4 rounded-lg border border-rose-500/20 bg-gradient-to-br from-rose-500/5 to-transparent p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-white">
+            <CheckCircle2 className="h-4 w-4 text-rose-400" />
+            TikTok Resmi API Bağlantısı
+          </p>
+          <p className="mt-0.5 text-[11px] text-zinc-500">
+            Display API v2 — profil, stats ve video listesi için
+          </p>
+        </div>
+        {account && (
+          <Badge className="bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30">
+            <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Bağlı
+          </Badge>
+        )}
+      </div>
+
+      {error && (
+        <div className="mb-3 rounded-md border border-red-500/30 bg-red-500/10 p-2 text-xs text-red-300">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="py-4 text-center text-xs text-zinc-500">Yükleniyor...</div>
+      ) : account ? (
+        <div className="space-y-3">
+          {/* Profil bilgisi */}
+          <div className="flex items-center gap-3">
+            {account.avatarUrl && (
+              <img
+                src={account.avatarUrl}
+                alt={account.displayName || account.username}
+                className="h-10 w-10 rounded-full border border-rose-500/30"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="flex items-center gap-1 text-sm font-medium text-white">
+                {account.displayName || account.username}
+                {account.isVerified && <CheckCircle2 className="h-3 w-3 text-rose-400" />}
+              </p>
+              <p className="truncate text-xs text-zinc-500">@{account.username}</p>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-4 gap-2 text-center">
+            <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-2">
+              <p className="text-sm font-bold text-white">{account.followerCount.toLocaleString('tr-TR')}</p>
+              <p className="text-[10px] text-zinc-500">Takipçi</p>
+            </div>
+            <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-2">
+              <p className="text-sm font-bold text-white">{account.followingCount.toLocaleString('tr-TR')}</p>
+              <p className="text-[10px] text-zinc-500">Takip</p>
+            </div>
+            <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-2">
+              <p className="text-sm font-bold text-white">{account.likesCount.toLocaleString('tr-TR')}</p>
+              <p className="text-[10px] text-zinc-500">Beğeni</p>
+            </div>
+            <div className="rounded-md border border-zinc-800 bg-zinc-900/40 p-2">
+              <p className="text-sm font-bold text-white">{account.videoCount}</p>
+              <p className="text-[10px] text-zinc-500">Video</p>
+            </div>
+          </div>
+
+          {/* Son güncelleme */}
+          {account.statsUpdatedAt && (
+            <p className="text-[10px] text-zinc-600">
+              Son senkronizasyon: {new Date(account.statsUpdatedAt).toLocaleString('tr-TR')}
+            </p>
+          )}
+
+          {/* Aksiyonlar */}
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSync}
+              disabled={syncing}
+              className="border-rose-500/30 text-rose-300 hover:bg-rose-500/10"
+            >
+              <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
+              {syncing ? 'Senkronize ediliyor...' : 'Verileri Yenile'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDisconnect}
+              className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+            >
+              <X className="mr-1.5 h-3.5 w-3.5" />
+              Bağlantıyı Kes
+            </Button>
+          </div>
+
+          {/* Son videolar */}
+          {account.videos && account.videos.length > 0 && (
+            <div>
+              <p className="mb-1.5 text-[10px] uppercase tracking-wider text-zinc-500">
+                Son {account.videos.length} Video
+              </p>
+              <div className="max-h-40 space-y-1.5 overflow-y-auto scrollbar-pink pr-1">
+                {account.videos.slice(0, 5).map((v: any) => (
+                  <div key={v.videoId} className="rounded-md border border-zinc-800 bg-zinc-900/40 p-2">
+                    <p className="truncate text-xs text-zinc-300">
+                      {v.title || v.description || 'Başlıksız'}
+                    </p>
+                    <div className="mt-1 flex gap-3 text-[10px] text-zinc-500">
+                      <span>👁 {v.viewCount.toLocaleString('tr-TR')}</span>
+                      <span>❤️ {v.likeCount.toLocaleString('tr-TR')}</span>
+                      <span>💬 {v.commentCount}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-xs text-zinc-400">
+            TikTok hesabını resmi API ile bağla. Profil bilgisi, takipçi sayısı,
+            video istatistikleri otomatik çekilir.
+          </p>
+          <Button
+            onClick={handleConnect}
+            className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600"
+          >
+            <ExternalLink className="mr-1.5 h-4 w-4" />
+            TikTok ile Bağlan
+          </Button>
+          <p className="text-[10px] text-zinc-600">
+            İzin verilen kapsamlar: user.info.profile, user.info.stats, video.list
+          </p>
+        </div>
+      )}
     </div>
   )
 }

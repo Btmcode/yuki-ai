@@ -77,3 +77,64 @@ model Setting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+// TikTok OAuth — resmi TikTok Developer API entegrasyonu
+// Login Kit + Display API v2 için
+model TikTokAccount {
+  id              String   @id @default(cuid())
+  openId          String   @unique // TikTok kullanıcının unique ID'si
+  username        String?  // @yuki_xaivar
+  displayName     String?
+  avatarUrl       String?
+  bioDescription  String?
+  isVerified      Boolean  @default(false)
+
+  // OAuth tokens (şifreli saklanmalı — production'da encrypt et)
+  accessToken     String
+  refreshToken    String
+  tokenExpiresAt  DateTime
+  tokenType       String   @default("Bearer")
+  scope           String   // "user.info.profile,user.info.stats,video.list"
+
+  // Stats (Display API'den çekilir)
+  followerCount   Int      @default(0)
+  followingCount  Int      @default(0)
+  likesCount      Int      @default(0)
+  videoCount      Int      @default(0)
+  statsUpdatedAt  DateTime?
+
+  // Meta
+  isActive        Boolean  @default(true) // aktif bağlı hesap
+  connectedAt     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  videos          TikTokVideo[]
+}
+
+model TikTokVideo {
+  id              String   @id @default(cuid())
+  accountId       String
+  videoId         String   @unique // TikTok video ID
+  title           String?
+  description     String?
+  coverImageUrl   String?
+  shareUrl        String?
+  duration        Int? // saniye
+  createTime      DateTime?
+
+  // Stats
+  viewCount       Int      @default(0)
+  likeCount       Int      @default(0)
+  commentCount    Int      @default(0)
+  shareCount      Int      @default(0)
+
+  // Meta
+  fetchedAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  account         TikTokAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([createTime])
+}
+
